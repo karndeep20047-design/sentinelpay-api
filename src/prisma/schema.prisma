@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CUSTOMER
+  EMPLOYEE
+  ADMIN
+}
+
+enum TransactionType {
+  TRANSFER
+  MPESA_CREDIT
+  MPESA_DEBIT
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  FLAGGED
+}
+
+model User {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  password      String
+  role          Role           @default(CUSTOMER)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  refreshTokens RefreshToken[]
+  wallet        Wallet?
+  sentTx        Transaction[]  @relation("SentTransactions")
+  receivedTx    Transaction[]  @relation("ReceivedTransactions")
+  auditLogs     AuditLog[]
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Wallet {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  balance       Decimal  @default(0) @db.Decimal(18, 2)
+  accountNumber String   @unique
+  currency      String   @default("KES")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Transaction {
+  id          String            @id @default(uuid())
+  senderId    String
+  sender      User              @relation("SentTransactions", fields: [senderId], references: [id])
+  receiverId  String
+  receiver    User              @relation("ReceivedTransactions", fields: [receiverId], references: [id])
+  amount      Decimal           @db.Decimal(18, 2)
+  type        TransactionType
+  status      TransactionStatus @default(PENDING)
+  description String?
+  createdAt   DateTime          @default(now())
+  fraudFlag   FraudFlag?
+}
+
+model FraudFlag {
+  id            String      @id @default(uuid())
+  transactionId String      @unique
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  riskScore     Int
+  reason        String
+  aiAnalysis    String
+  createdAt     DateTime    @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  metadata  Json     @default("{}")
+  ipAddress String
+  createdAt DateTime @default(now())
+}
