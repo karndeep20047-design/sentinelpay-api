@@ -11,6 +11,7 @@
 A production-style fintech backend API demonstrating secure payment processing, atomic wallet transfers, and real-time AI-powered fraud detection using the Google Gemini API. Built specifically to showcase skills in cybersecurity, payments, and AI integration for East African financial infrastructure.
 
 > 🔴 **Live API:** `https://sentinelpay-api-j9o5.onrender.com`
+> 🎨 **Live Dashboard (Vercel):** `https://sentinelpay-api.vercel.app`
 > 📖 **Swagger Docs:** `https://sentinelpay-api-j9o5.onrender.com/api-docs`
 
 ---
