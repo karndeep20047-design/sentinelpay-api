@@ -529,7 +529,9 @@
 // ═══════════════════════════════════════════════════
 //  CONSTANTS & STATE
 // ═══════════════════════════════════════════════════
-const BASE = 'http://localhost:3001';
+const BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:'
+  ? 'http://localhost:3001'
+  : 'https://sentinelpay-api-j9o5.onrender.com';
 
 const S = {
   token:        null,  // access token
