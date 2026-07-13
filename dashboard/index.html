@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="SentinelPay — AI-Powered Secure Payment Processing Dashboard">
   <title>SentinelPay Dashboard</title>
-  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;0,14..32,900&display=swap" rel="stylesheet">
@@ -74,12 +74,11 @@
     }
     .brand-icon {
       width: 30px; height: 30px;
-      background: linear-gradient(135deg, var(--accent) 0%, #00a876 100%);
-      border-radius: 7px;
       display: flex; align-items: center; justify-content: center;
-      color: #000; flex-shrink: 0;
+      color: var(--accent); flex-shrink: 0;
+      filter: drop-shadow(0 0 8px var(--accent-glow));
     }
-    .brand-icon svg { width: 16px; height: 16px; stroke-width: 2.5; }
+    .brand-icon svg { width: 24px; height: 24px; }
     .brand-name {
       font-size: 1.05rem; font-weight: 800;
       letter-spacing: -0.03em; color: var(--text);
@@ -508,8 +507,9 @@
 <header class="header">
   <a class="brand" href="#">
     <div class="brand-icon">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" fill="rgba(0, 211, 149, 0.1)"/>
+        <path d="M13 7L9 13h3v4l4-6h-3V7z" fill="currentColor"/>
       </svg>
     </div>
     <span class="brand-name">Sentinel<em>Pay</em></span>
