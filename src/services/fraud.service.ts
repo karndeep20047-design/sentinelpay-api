@@ -129,7 +129,7 @@ export class FraudService {
       throw new Error('GEMINI_API_KEY is not defined');
     }
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key=${apiKey}`;
 
     const prompt = `You are a fraud detection AI for a fintech platform. Analyze this transaction and return a JSON object with: riskScore (0-100 integer), reason (one sentence), recommendation (one of: BLOCK, REVIEW, ALLOW). Transaction details: amount: ${transaction.amount} KES, sender history: ${recentCount} transactions in last 60 seconds, receiver: ${transaction.receiverId}, rule triggered: ${triggeredRule}. Return ONLY valid JSON, no markdown, no explanation.`;
 
