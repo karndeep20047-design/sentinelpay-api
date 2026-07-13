@@ -1,310 +1,290 @@
-# SentinelPay – AI-Powered Secure Payment Processing API
+# 🛡️ SentinelPay – AI-Powered Secure Payment Processing API
 
-[![Node.js](https://img.shields.io/badge/Node.js-20-339933?style=flat-square&logo=node.js)](https://nodejs.org)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?style=flat-square&logo=postgresql)](https://www.postgresql.org)
-[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker)](https://www.docker.com)
-[![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748?style=flat-square&logo=prisma)](https://www.prisma.io)
-[![JWT](https://img.shields.io/badge/JWT-Auth-000000?style=flat-square&logo=jsonwebtokens)](https://jwt.io)
-[![Claude AI](https://img.shields.io/badge/Claude-AI%20Fraud%20Detection-FF6B35?style=flat-square)](https://anthropic.com)
+![Node.js](https://img.shields.io/badge/Node.js-20-339933?style=flat-square&logo=node.js&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-Strict-3178C6?style=flat-square&logo=typescript&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=flat-square&logo=postgresql&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker&logoColor=white)
+![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748?style=flat-square&logo=prisma&logoColor=white)
+![JWT](https://img.shields.io/badge/JWT-Auth-000000?style=flat-square&logo=jsonwebtokens&logoColor=white)
+![Claude AI](https://img.shields.io/badge/Claude-AI%20Fraud%20Detection-D97757?style=flat-square&logo=anthropic&logoColor=white)
 
-SentinelPay is a production-grade fintech backend API simulating a secure digital wallet system with AI-powered fraud detection. It demonstrates real-time transaction monitoring using Anthropic Claude AI, atomic fund transfers with full audit trails, and M-Pesa payment simulation — built to the standards of a cybersecurity + payments startup.
+A production-style fintech backend API demonstrating secure payment processing, atomic wallet transfers, and real-time AI-powered fraud detection using the Anthropic Claude API. Built specifically to showcase skills in cybersecurity, payments, and AI integration for East African financial infrastructure.
 
----
-
-## Features
-
-- 🔐 **JWT Auth** — Access + refresh tokens with bcrypt-hashed refresh token storage
-- 💰 **Digital Wallets** — Auto-created on registration with unique 10-digit account numbers (KES currency)
-- 💸 **Atomic Transfers** — Fund transfers using Prisma `$transaction()` — fully atomic, rollback-safe
-- 🤖 **AI Fraud Detection** — Claude `claude-3-haiku-20240307` analyzes flagged transactions and returns riskScore, reason, recommendation
-- 🚨 **3-Rule Fraud Engine** — Large amount (>100K KES), high velocity (>5 tx/60s), duplicate receiver (2x in 30s)
-- 📱 **M-Pesa Simulation** — Webhook endpoint that credits wallets and logs transactions
-- 📋 **Audit Logging** — Every auth event and transfer logged with IP address and metadata
-- 🛡️ **Rate Limiting** — Auth routes: 10 req/15 min; Transfer: 20 req/min
-- 👑 **Admin Dashboard API** — Users, transactions, fraud flags, aggregate stats, top spenders
-- 📚 **Swagger Docs** — Full OpenAPI 3.0 documentation at `/api-docs`
-- 🐳 **Docker Ready** — One-command local setup with `docker-compose up --build`
-- ✅ **Zod Validation** — All inputs validated with descriptive error messages
+> 🔴 **Live API:** `https://sentinelpay-api.up.railway.app`
+> 📖 **Swagger Docs:** `https://sentinelpay-api.up.railway.app/api-docs`
 
 ---
 
-## Tech Stack
+## ✨ Features
+
+- 🔐 **JWT Authentication** — access + refresh token dual-token system with bcrypt-hashed storage
+- 👛 **Wallet System** — each user gets an auto-generated wallet with account number and KES balance
+- 💸 **Atomic Money Transfers** — Prisma `$transaction()` ensures no money is lost if anything fails mid-transfer
+- 🤖 **AI Fraud Detection** — Claude AI (`claude-3-haiku`) analyzes flagged transactions and returns risk score, reason, and recommendation
+- 🚨 **Rule-Based Flagging** — 3 fraud rules trigger before AI analysis
+- 📱 **M-Pesa Simulation** — fake STK push callback credits wallets and logs transactions
+- 🛡️ **Role-Based Access Control** — CUSTOMER, EMPLOYEE, and ADMIN roles with protected routes
+- 📊 **Admin Dashboard API** — users, transactions, fraud flags, and aggregate stats
+- 📝 **Audit Logging** — every login, transfer, and failed auth is logged with IP and metadata
+- 🚫 **Rate Limiting** — brute-force protection on auth and transaction routes
+- 📖 **Swagger UI** — full interactive API documentation at `/api-docs`
+- 🐳 **Fully Dockerised** — single command setup, zero manual configuration
+
+---
+
+## 🤖 How AI Fraud Detection Works
+
+Every transfer is checked against 3 rules after completion:
+
+| Rule | Condition | Action |
+|---|---|---|
+| Large Transfer | Amount > 100,000 KES | Flag |
+| Velocity Check | Sender made > 5 transactions in 60 seconds | Flag |
+| Repeat Transfer | Same sender → same receiver twice in 30 seconds | Flag |
+
+If any rule triggers, the transaction is marked **FLAGGED** and the Claude API is called asynchronously:
+
+```json
+Prompt sent to Claude:
+"You are a fraud detection AI for a fintech platform.
+Analyze this transaction and return JSON with:
+riskScore (0-100), reason (one sentence), recommendation (BLOCK/REVIEW/ALLOW)"
+
+Claude response stored in FraudFlag:
+{
+  "riskScore": 87,
+  "reason": "Transfer significantly exceeds typical transaction thresholds.",
+  "recommendation": "BLOCK"
+}
+```
+
+The fraud check runs **fire-and-forget** — the user gets their response immediately, AI analysis happens in the background. If Claude is unavailable, a fallback flag is stored and the app never crashes.
+
+---
+
+## 🛠️ Tech Stack
 
 | Layer | Technology |
 |---|---|
 | Runtime | Node.js 20 |
-| Language | TypeScript 5.8 (strict mode) |
-| Framework | Express.js 5 |
+| Language | TypeScript (strict mode) |
+| Framework | Express.js |
 | Database | PostgreSQL 16 |
-| ORM | Prisma 6 |
-| Auth | JWT (jsonwebtoken) + bcrypt |
+| ORM | Prisma |
+| Auth | JWT (access + refresh tokens) |
+| Hashing | bcrypt (12 rounds) |
+| AI | Anthropic Claude API (claude-3-haiku) |
 | Validation | Zod |
-| AI | Anthropic Claude (`claude-3-haiku-20240307`) |
 | Rate Limiting | express-rate-limit |
-| API Docs | swagger-ui-express + swagger-jsdoc |
-| Container | Docker + docker-compose |
+| API Docs | Swagger UI (swagger-jsdoc) |
+| Containers | Docker + Docker Compose |
 
 ---
 
-## Quick Start
+## 🚀 Getting Started
 
 ### Prerequisites
-- Docker + Docker Compose
-- Anthropic API key (for AI fraud detection)
+- Docker Desktop installed and running
+- Anthropic API key (free at console.anthropic.com)
 
 ### Setup
 
 ```bash
-# 1. Clone the repository
-git clone https://github.com/yourusername/sentinelpay-api.git
+# 1. Clone the repo
+git clone https://github.com/karndeep20047-design/sentinelpay-api.git
 cd sentinelpay-api
 
-# 2. Configure environment
+# 2. Copy environment variables
 cp .env.example .env
-# Edit .env and fill in:
-#   JWT_ACCESS_SECRET=<random 64-char string>
-#   JWT_REFRESH_SECRET=<random 64-char string>
-#   ANTHROPIC_API_KEY=<your Claude API key>
 
-# 3. Build and start
+# 3. Add your Anthropic API key to .env
+ANTHROPIC_API_KEY=sk-ant-your-key-here
+
+# 4. Start everything
 docker-compose up --build
 ```
 
-The API will be live at `http://localhost:3000`.
+API live at `http://localhost:3001`
+Swagger UI at `http://localhost:3001/api-docs`
+
+### Seed Accounts
+
+| Email | Password | Role | Wallet Balance |
+|---|---|---|---|
+| admin@sentinelpay.com | Admin123! | ADMIN | — |
+| employee@sentinelpay.com | Employee123! | EMPLOYEE | — |
+| alice@example.com | User123! | CUSTOMER | 500,000 KES |
+| bob@example.com | User123! | CUSTOMER | 250,000 KES |
 
 ---
 
-## API Endpoints
+## 📡 API Endpoints
+
+### Auth (`/api/auth`) — Public, Rate Limited
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/auth/register` | Register new user + auto-create wallet |
+| POST | `/api/auth/login` | Login, receive JWT tokens |
+| POST | `/api/auth/refresh` | Get new access token |
+| POST | `/api/auth/logout` | Invalidate refresh token |
+
+### Wallet (`/api/wallet`) — Protected
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/wallet/me` | Full wallet info (balance + account number) |
+| GET | `/api/wallet/balance` | Balance only |
+
+### Transactions (`/api/transactions`) — Protected
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/transactions/transfer` | Send money to account number |
+| GET | `/api/transactions` | Own transaction history (paginated) |
+| GET | `/api/transactions/:id` | Single transaction with fraud flag if present |
+
+### M-Pesa (`/api/mpesa`) — Public Webhook
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/mpesa/callback` | Simulate STK push credit to wallet |
+
+### Admin (`/api/admin`) — ADMIN only
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/admin/users` | All users |
+| GET | `/api/admin/transactions` | All transactions with filters |
+| GET | `/api/admin/flags` | All fraud flags with AI analysis |
+| GET | `/api/admin/stats` | Aggregate stats |
+| DELETE | `/api/admin/users/:id` | Delete a user |
 
 ### System
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| GET | `/health` | None | Health check |
-| GET | `/api-docs` | None | Swagger UI |
 
-### Auth
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| POST | `/api/auth/register` | None | Register user + auto-create wallet |
-| POST | `/api/auth/login` | None | Login, returns JWT tokens |
-| POST | `/api/auth/refresh` | None | Refresh access token |
-| POST | `/api/auth/logout` | Bearer | Revoke refresh token |
-
-### Wallet
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| GET | `/api/wallet/me` | Bearer | Full wallet info |
-| GET | `/api/wallet/balance` | Bearer | Current balance only |
-
-### Transactions
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| POST | `/api/transactions/transfer` | Bearer | Transfer funds to account number |
-| GET | `/api/transactions` | Bearer | Paginated history (`?page=1&limit=20&startDate=&endDate=`) |
-| GET | `/api/transactions/:id` | Bearer | Single transaction with fraud flag |
-
-### M-Pesa
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| POST | `/api/mpesa/callback` | None | Simulate STK push credit |
-
-### Admin
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| GET | `/api/admin/users` | ADMIN | All users with wallets |
-| GET | `/api/admin/transactions` | ADMIN | All transactions (`?status=FLAGGED`) |
-| GET | `/api/admin/flags` | ADMIN | All fraud flags with AI analysis |
-| GET | `/api/admin/stats` | ADMIN | Platform stats + top spenders |
-| DELETE | `/api/admin/users/:id` | ADMIN | Delete a user |
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/health` | Health check |
+| GET | `/api-docs` | Swagger UI |
 
 ---
 
-## Example Requests
+## 🧪 Example: Transfer + Fraud Flag
 
-### Register
-```bash
-curl -X POST http://localhost:3000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"email": "newuser@example.com", "password": "User123!"}'
-```
+### Trigger a flagged transfer (over 100,000 KES)
 
-### Login
 ```bash
-curl -X POST http://localhost:3000/api/auth/login \
+curl -X POST http://localhost:3001/api/transactions/transfer \
+  -H "Authorization: Bearer <alice_access_token>" \
   -H "Content-Type: application/json" \
-  -d '{"email": "alice@example.com", "password": "User123!"}'
-```
-
-### Transfer (triggers fraud flag — amount > 100,000 KES)
-```bash
-curl -X POST http://localhost:3000/api/transactions/transfer \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <access_token>" \
   -d '{
-    "toAccountNumber": "1000000004",
+    "toAccountNumber": "bob_account_number",
     "amount": 150000,
-    "description": "Large transfer test"
+    "description": "Payment"
   }'
 ```
 
-**Response (flagged):**
 ```json
 {
   "success": true,
-  "message": "Transaction flagged for review",
+  "message": "Transfer completed",
   "data": {
-    "id": "txn-uuid",
-    "amount": "150000.00",
+    "id": "uuid",
+    "amount": "150000",
     "status": "FLAGGED",
-    "type": "TRANSFER",
-    "createdAt": "2024-01-15T10:30:00.000Z"
+    "type": "TRANSFER"
   }
 }
 ```
 
-### M-Pesa Credit
-```bash
-curl -X POST http://localhost:3000/api/mpesa/callback \
-  -H "Content-Type: application/json" \
-  -d '{
-    "accountNumber": "1000000003",
-    "amount": 5000,
-    "mpesaRef": "QJK2LS9KDF",
-    "phoneNumber": "254712345678"
-  }'
-```
+### Check fraud flag (as admin, after a few seconds)
 
-### View Fraud Flags (Admin)
 ```bash
-curl http://localhost:3000/api/admin/flags \
+curl http://localhost:3001/api/admin/flags \
   -H "Authorization: Bearer <admin_access_token>"
 ```
 
-**Response:**
 ```json
 {
   "success": true,
-  "message": "Fraud flags retrieved",
-  "data": {
-    "flags": [
-      {
-        "id": "flag-uuid",
-        "riskScore": 87,
-        "reason": "Transaction exceeds 100,000 KES threshold",
-        "aiAnalysis": "{\"riskScore\":87,\"reason\":\"Large transfer significantly above normal limits\",\"recommendation\":\"REVIEW\"}",
-        "transaction": {
-          "amount": "150000.00",
-          "status": "FLAGGED",
-          "sender": { "email": "alice@example.com" },
-          "receiver": { "email": "bob@example.com" }
-        }
-      }
-    ]
-  }
+  "data": [{
+    "riskScore": 87,
+    "reason": "Transfer significantly exceeds typical transaction thresholds.",
+    "aiAnalysis": "{\"riskScore\":87,\"reason\":\"Transfer significantly exceeds typical transaction thresholds.\",\"recommendation\":\"BLOCK\"}",
+    "transaction": {
+      "amount": "150000",
+      "status": "FLAGGED"
+    }
+  }]
 }
 ```
 
 ---
 
-## Fraud Detection
+## 🔒 Security Design
 
-SentinelPay runs automated fraud analysis after every transfer. Three rules are evaluated:
-
-| Rule | Condition | Trigger |
-|---|---|---|
-| `LARGE_AMOUNT` | Transaction > 100,000 KES | Immediate flag |
-| `HIGH_VELOCITY` | Sender has > 5 transactions in last 60 seconds | Velocity attack detection |
-| `DUPLICATE_RECEIVER` | Same sender → same receiver, 2+ times in 30 seconds | Duplicate payment detection |
-
-### Claude AI Integration
-
-When any rule triggers:
-
-1. Transaction status is updated to `FLAGGED`
-2. Claude `claude-3-haiku-20240307` is called with transaction context
-3. Claude returns structured JSON: `{ riskScore: 0-100, reason: string, recommendation: BLOCK|REVIEW|ALLOW }`
-4. A `FraudFlag` record is created with the AI analysis
-5. If Claude is unavailable, a fallback `FraudFlag` is stored — the request **never crashes**
-
-> **Fire-and-forget design**: Claude analysis runs asynchronously after the transfer response is sent. Users get instant transfer confirmation; fraud analysis happens in the background.
+| Feature | Implementation |
+|---|---|
+| Password hashing | bcrypt, 12 salt rounds |
+| Refresh token storage | bcrypt-hashed in DB, plain token never persisted |
+| Access token expiry | 15 minutes |
+| Refresh token expiry | 7 days, revoked on logout |
+| Atomic transfers | Prisma `$transaction()` — full rollback on failure |
+| Brute force protection | Rate limiting on auth + transfer routes |
+| Input validation | Zod schemas on every endpoint |
+| Role enforcement | Middleware-level RBAC |
+| Audit trail | Every action logged with IP and metadata |
+| AI graceful degradation | Claude failure stores fallback flag, never crashes app |
 
 ---
 
-## Seeded Test Accounts
-
-| Email | Password | Role | Balance |
-|---|---|---|---|
-| `admin@sentinelpay.com` | `Admin123!` | ADMIN | — |
-| `employee@sentinelpay.com` | `Employee123!` | EMPLOYEE | — |
-| `alice@example.com` | `User123!` | CUSTOMER | 500,000 KES |
-| `bob@example.com` | `User123!` | CUSTOMER | 250,000 KES |
-
-Alice's account number: `1000000003`  
-Bob's account number: `1000000004`
-
----
-
-## Security
-
-- **Password Hashing** — bcrypt with 12 salt rounds
-- **JWT Access Tokens** — 15-minute expiry, signed with HS256
-- **Refresh Tokens** — Hashed with bcrypt before storage, 7-day expiry
-- **Rate Limiting** — Auth: 10 req/15 min; Transfers: 20 req/min
-- **Input Validation** — Zod schemas on all endpoints
-- **Atomic Transactions** — Prisma `$transaction()` prevents partial fund transfers
-- **Audit Trail** — All auth events and transfers logged with IP address
-- **Self-Transfer Prevention** — Sender cannot transfer to own account
-- **No Balance Leakage** — Auth responses never include wallet balance
-
----
-
-## Architecture
+## 🏗️ Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        SentinelPay API                          │
-│                                                                 │
-│  Client Request                                                 │
-│       │                                                         │
-│       ▼                                                         │
-│  ┌─────────────┐    ┌──────────────┐    ┌──────────────────┐   │
-│  │ Rate Limiter│───▶│  Auth Middle │───▶│    Controller    │   │
-│  └─────────────┘    └──────────────┘    └────────┬─────────┘   │
-│                                                  │             │
-│       ┌──────────────────────────────────────────┤             │
-│       │                  │                       │             │
-│       ▼                  ▼                       ▼             │
-│  ┌─────────┐      ┌────────────┐         ┌────────────┐        │
-│  │  Auth   │      │  Wallet    │         │Transaction │        │
-│  │ Service │      │  Service   │         │  Service   │        │
-│  └────┬────┘      └─────┬──────┘         └─────┬──────┘        │
-│       │                 │                      │               │
-│       └─────────────────┴──────────────────────┤               │
-│                                               │               │
-│                         ┌─────────────────────┤               │
-│                         │ Fire-and-Forget      │               │
-│                         ▼                      ▼               │
-│                  ┌─────────────┐       ┌──────────────┐        │
-│                  │Fraud Service│       │ Audit Service │        │
-│                  └──────┬──────┘       └──────┬───────┘        │
-│                         │                     │               │
-│                         ▼                     │               │
-│                  ┌─────────────┐              │               │
-│                  │ Claude AI   │              │               │
-│                  │  (Haiku)    │              │               │
-│                  └──────┬──────┘              │               │
-│                         │                     │               │
-│                         ▼                     ▼               │
-│                  ┌─────────────────────────────────┐          │
-│                  │         PostgreSQL               │          │
-│                  │  (Prisma ORM + $transaction())  │          │
-│                  └─────────────────────────────────┘          │
-└─────────────────────────────────────────────────────────────────┘
+Client Request
+      │
+      ▼
+Rate Limiter → Auth Middleware → RBAC
+      │
+      ▼
+Controller (thin — validates, calls service, returns response)
+      │
+      ▼
+Service Layer (business logic)
+      │
+      ├── Prisma $transaction() ──→ PostgreSQL
+      │
+      └── fraud.service (async, fire-and-forget)
+                │
+                ├── Rule engine (3 rules)
+                │
+                └── Claude API ──→ FraudFlag stored in DB
 ```
 
 ---
 
-## License
+## 📁 Project Structure
 
-MIT © SentinelPay
+```
+sentinelpay-api/
+├── prisma/seed.ts
+├── src/
+│   ├── controllers/        # auth, wallet, transaction, mpesa, admin
+│   ├── middleware/         # auth, rateLimiter, errorHandler
+│   ├── routes/             # 5 route groups
+│   ├── services/           # auth, token, wallet, transaction, fraud, audit
+│   ├── swagger/            # Swagger config
+│   ├── prisma/             # schema.prisma
+│   ├── utils/              # ApiResponse, AppError, prisma client
+│   └── index.ts
+├── Dockerfile
+├── docker-compose.yml
+├── docker-entrypoint.sh
+└── .env.example
+```
+
+---
+
+## 📄 License
+
+MIT © Karndeep Singh Bhamrah
