@@ -6,12 +6,12 @@
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker&logoColor=white)
 ![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748?style=flat-square&logo=prisma&logoColor=white)
 ![JWT](https://img.shields.io/badge/JWT-Auth-000000?style=flat-square&logo=jsonwebtokens&logoColor=white)
-![Claude AI](https://img.shields.io/badge/Claude-AI%20Fraud%20Detection-D97757?style=flat-square&logo=anthropic&logoColor=white)
+![Gemini AI](https://img.shields.io/badge/Gemini-AI%20Fraud%20Detection-8E75C2?style=flat-square&logo=google-gemini&logoColor=white)
 
-A production-style fintech backend API demonstrating secure payment processing, atomic wallet transfers, and real-time AI-powered fraud detection using the Anthropic Claude API. Built specifically to showcase skills in cybersecurity, payments, and AI integration for East African financial infrastructure.
+A production-style fintech backend API demonstrating secure payment processing, atomic wallet transfers, and real-time AI-powered fraud detection using the Google Gemini API. Built specifically to showcase skills in cybersecurity, payments, and AI integration for East African financial infrastructure.
 
-> 🔴 **Live API:** `https://sentinelpay-api.up.railway.app`
-> 📖 **Swagger Docs:** `https://sentinelpay-api.up.railway.app/api-docs`
+> 🔴 **Live API:** `https://sentinelpay-api-j9o5.onrender.com`
+> 📖 **Swagger Docs:** `https://sentinelpay-api-j9o5.onrender.com/api-docs`
 
 ---
 
@@ -20,7 +20,7 @@ A production-style fintech backend API demonstrating secure payment processing, 
 - 🔐 **JWT Authentication** — access + refresh token dual-token system with bcrypt-hashed storage
 - 👛 **Wallet System** — each user gets an auto-generated wallet with account number and KES balance
 - 💸 **Atomic Money Transfers** — Prisma `$transaction()` ensures no money is lost if anything fails mid-transfer
-- 🤖 **AI Fraud Detection** — Claude AI (`claude-3-haiku`) analyzes flagged transactions and returns risk score, reason, and recommendation
+- 🤖 **AI Fraud Detection** — Gemini AI (`gemini-3.1-flash-lite`) analyzes flagged transactions and returns risk score, reason, and recommendation
 - 🚨 **Rule-Based Flagging** — 3 fraud rules trigger before AI analysis
 - 📱 **M-Pesa Simulation** — fake STK push callback credits wallets and logs transactions
 - 🛡️ **Role-Based Access Control** — CUSTOMER, EMPLOYEE, and ADMIN roles with protected routes
@@ -42,15 +42,15 @@ Every transfer is checked against 3 rules after completion:
 | Velocity Check | Sender made > 5 transactions in 60 seconds | Flag |
 | Repeat Transfer | Same sender → same receiver twice in 30 seconds | Flag |
 
-If any rule triggers, the transaction is marked **FLAGGED** and the Claude API is called asynchronously:
+If any rule triggers, the transaction is marked **FLAGGED** and the Gemini API is called asynchronously:
 
 ```json
-Prompt sent to Claude:
+Prompt sent to Gemini:
 "You are a fraud detection AI for a fintech platform.
 Analyze this transaction and return JSON with:
 riskScore (0-100), reason (one sentence), recommendation (BLOCK/REVIEW/ALLOW)"
 
-Claude response stored in FraudFlag:
+Gemini response stored in FraudFlag:
 {
   "riskScore": 87,
   "reason": "Transfer significantly exceeds typical transaction thresholds.",
@@ -58,7 +58,7 @@ Claude response stored in FraudFlag:
 }
 ```
 
-The fraud check runs **fire-and-forget** — the user gets their response immediately, AI analysis happens in the background. If Claude is unavailable, a fallback flag is stored and the app never crashes.
+The fraud check runs **fire-and-forget** — the user gets their response immediately, AI analysis happens in the background. If the Gemini API is unavailable, a fallback flag is stored and the app never crashes.
 
 ---
 
@@ -73,7 +73,7 @@ The fraud check runs **fire-and-forget** — the user gets their response immedi
 | ORM | Prisma |
 | Auth | JWT (access + refresh tokens) |
 | Hashing | bcrypt (12 rounds) |
-| AI | Anthropic Claude API (claude-3-haiku) |
+| AI | Google Gemini API (gemini-flash-lite-latest) |
 | Validation | Zod |
 | Rate Limiting | express-rate-limit |
 | API Docs | Swagger UI (swagger-jsdoc) |
@@ -85,7 +85,7 @@ The fraud check runs **fire-and-forget** — the user gets their response immedi
 
 ### Prerequisites
 - Docker Desktop installed and running
-- Anthropic API key (free at console.anthropic.com)
+- Gemini API key (free at aistudio.google.com)
 
 ### Setup
 
@@ -97,8 +97,8 @@ cd sentinelpay-api
 # 2. Copy environment variables
 cp .env.example .env
 
-# 3. Add your Anthropic API key to .env
-ANTHROPIC_API_KEY=sk-ant-your-key-here
+# 3. Add your Gemini API key to .env
+GEMINI_API_KEY=AIzaSyYourKeyHere
 
 # 4. Start everything
 docker-compose up --build
@@ -234,7 +234,7 @@ curl http://localhost:3001/api/admin/flags \
 | Input validation | Zod schemas on every endpoint |
 | Role enforcement | Middleware-level RBAC |
 | Audit trail | Every action logged with IP and metadata |
-| AI graceful degradation | Claude failure stores fallback flag, never crashes app |
+| AI graceful degradation | Gemini failure stores fallback flag, never crashes app |
 
 ---
 
@@ -258,7 +258,7 @@ Service Layer (business logic)
                 │
                 ├── Rule engine (3 rules)
                 │
-                └── Claude API ──→ FraudFlag stored in DB
+                └── Gemini API ──→ FraudFlag stored in DB
 ```
 
 ---
