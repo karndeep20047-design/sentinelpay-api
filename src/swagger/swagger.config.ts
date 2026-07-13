@@ -8,7 +8,7 @@ const options: swaggerJsdoc.Options = {
       version: '1.0.0',
       description:
         'AI-Powered Secure Payment Processing and Fraud Detection API. ' +
-        'Built with Node.js, TypeScript, PostgreSQL, Prisma, and Anthropic Claude AI.',
+        'Built with Node.js, TypeScript, PostgreSQL, Prisma, and Google Gemini AI.',
       contact: {
         name: 'SentinelPay',
         email: 'admin@sentinelpay.com',
@@ -19,7 +19,7 @@ const options: swaggerJsdoc.Options = {
     },
     servers: [
       {
-        url: 'http://localhost:3000',
+        url: 'http://localhost:3001',
         description: 'Local Development Server',
       },
     ],

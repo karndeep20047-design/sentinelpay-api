@@ -1,9 +1,8 @@
-import Anthropic from '@anthropic-ai/sdk';
 import { Transaction, TransactionStatus } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { prisma } from '../utils/prisma';
 
-interface ClaudeAnalysis {
+interface AiAnalysis {
   riskScore: number;
   reason: string;
   recommendation: 'BLOCK' | 'REVIEW' | 'ALLOW';
@@ -15,13 +14,7 @@ const HIGH_VELOCITY_WINDOW_MS = 60_000; // 60 seconds
 const DUPLICATE_RECEIVER_WINDOW_MS = 30_000; // 30 seconds
 
 export class FraudService {
-  private client: Anthropic;
-
-  constructor() {
-    this.client = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY,
-    });
-  }
+  constructor() {}
 
   /**
    * Fire-and-forget fraud analysis. Called after a transaction completes.
@@ -45,18 +38,18 @@ export class FraudService {
       data: { status: TransactionStatus.FLAGGED },
     });
 
-    // Call Claude for AI analysis, with graceful fallback
+    // Call Gemini for AI analysis, with graceful fallback
     let riskScore = 75;
     let reason = `Rule triggered: ${triggeredRule}`;
-    let aiAnalysis = `Fallback analysis: ${triggeredRule} — Claude API unavailable`;
+    let aiAnalysis = `Fallback analysis: ${triggeredRule} — Gemini API unavailable`;
 
     try {
-      const claudeResult = await this.callClaude(transaction, recentCount, triggeredRule);
-      riskScore = claudeResult.riskScore;
-      reason = claudeResult.reason;
-      aiAnalysis = JSON.stringify(claudeResult);
+      const geminiResult = await this.callGemini(transaction, recentCount, triggeredRule);
+      riskScore = geminiResult.riskScore;
+      reason = geminiResult.reason;
+      aiAnalysis = JSON.stringify(geminiResult);
     } catch (err) {
-      console.error('[FraudService] Claude API call failed, using fallback:', err);
+      console.error('[FraudService] Gemini API call failed, using fallback:', err);
     }
 
     // Store the FraudFlag
@@ -123,32 +116,57 @@ export class FraudService {
   }
 
   /**
-   * Calls Claude claude-3-haiku-20240307 for AI fraud analysis.
-   * Returns a structured ClaudeAnalysis object.
+   * Calls Gemini gemini-1.5-flash for AI fraud analysis.
+   * Returns a structured AiAnalysis object.
    */
-  private async callClaude(
+  private async callGemini(
     transaction: Transaction,
     recentCount: number,
     triggeredRule: string
-  ): Promise<ClaudeAnalysis> {
+  ): Promise<AiAnalysis> {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error('GEMINI_API_KEY is not defined');
+    }
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
     const prompt = `You are a fraud detection AI for a fintech platform. Analyze this transaction and return a JSON object with: riskScore (0-100 integer), reason (one sentence), recommendation (one of: BLOCK, REVIEW, ALLOW). Transaction details: amount: ${transaction.amount} KES, sender history: ${recentCount} transactions in last 60 seconds, receiver: ${transaction.receiverId}, rule triggered: ${triggeredRule}. Return ONLY valid JSON, no markdown, no explanation.`;
 
-    const message = await this.client.messages.create({
-      model: 'claude-3-haiku-20240307',
-      max_tokens: 256,
-      messages: [
-        {
-          role: 'user',
-          content: prompt,
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              {
+                text: prompt,
+              },
+            ],
+          },
+        ],
+        generationConfig: {
+          responseMimeType: 'application/json',
         },
-      ],
+      }),
     });
 
-    const rawText =
-      message.content[0].type === 'text' ? message.content[0].text : '';
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Gemini API returned error status ${response.status}: ${errorText}`);
+    }
+
+    const result = (await response.json()) as any;
+    const rawText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!rawText) {
+      throw new Error('Gemini returned an empty or invalid response structure');
+    }
 
     // Parse JSON — may throw, caller handles the fallback
-    const parsed = JSON.parse(rawText) as ClaudeAnalysis;
+    const parsed = JSON.parse(rawText.trim()) as AiAnalysis;
 
     // Validate shape
     if (
@@ -156,7 +174,7 @@ export class FraudService {
       typeof parsed.reason !== 'string' ||
       !['BLOCK', 'REVIEW', 'ALLOW'].includes(parsed.recommendation)
     ) {
-      throw new Error('Claude returned invalid analysis shape');
+      throw new Error('Gemini returned invalid analysis shape');
     }
 
     // Clamp riskScore to 0-100
