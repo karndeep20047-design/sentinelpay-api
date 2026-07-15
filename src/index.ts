@@ -30,6 +30,11 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   },
 }));
 
+// Root redirect to docs
+app.get('/', (_req, res) => {
+  res.redirect('/api-docs');
+});
+
 // Health check
 app.get('/health', (_req, res) => {
   return ApiResponse.success(res, 'SentinelPay API is running', {
